@@ -1447,6 +1447,7 @@
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) save();
+      else updateTimerState();
     });
 
 
@@ -1503,7 +1504,7 @@
       let fb = document.getElementById('floatBtn');
       if (fb) fb.textContent = (pipWindow || (timerPopup && !timerPopup.closed)) ? '↙ Dock timer' : '↗ Float timer';
     }
-    setInterval(() => { if (!document.hidden && (data.timer.running || pipWindow || (timerPopup && !timerPopup.closed))) updateTimerState(); }, 500);
+    setInterval(() => { if (data.timer.running || pipWindow || (timerPopup && !timerPopup.closed)) updateTimerState(); }, 500);
 
     function navBuild() {
       const html = pages.map(p => `<button data-page="${p[0]}" onclick="showPage('${p[0]}')">${p[1]}</button>`).join('');
@@ -1568,6 +1569,14 @@
           let root = pipWindow.document.createElement('div');
           root.id = 'floating';
           pipWindow.document.body.appendChild(root);
+          // Keep the floating timer display updating even when the main FocusFlow tab is hidden.
+          pipWindow.setInterval(() => {
+            try {
+              if (pipWindow && !pipWindow.closed && window.opener && !window.opener.closed) {
+                window.opener.renderPipContent();
+              }
+            } catch (e) { }
+          }, 500);
           pipWindow.addEventListener('pagehide', () => { pipWindow = null; updateTimerState(); });
           showToast('Timer is now floating');
           updateTimerState();
